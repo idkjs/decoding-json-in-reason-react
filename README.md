@@ -415,3 +415,26 @@ Before we can use these newly installed BuckleScript packages we need to let Buc
 // ...more stuff
 
 You'll need to kill and restart your yarn start/npm start command so that the build system can pick up the changes to .bsconfig.
+
+## Reading JSON
+
+Now we've installed `bs-json` we can use `Json.Decode` to read `JSON` and turn it into a record.
+
+We'll define a function called `parseRepoJson` at the end of `RepoData.re`:
+
+```
+// RepoData.re
+type repo = {
+  full_name: string,
+  stargazers_count: int,
+  html_url: string
+};
+
+let parseRepoJson = (json: Js.Json.t): repo => {
+  full_name: Json.Decode.field("full_name", Json.Decode.string, json),
+  stargazers_count: Json.Decode.field("stargazers_count", Json.Decode.int, json),
+  html_url: Json.Decode.field("html_url", Json.Decode.string, json)
+};
+```
+
+This defines a function called `parseRepoJson` which takes one argument called `json` and returns a value of the type `RepoData.repo`. The `Json.Decode` module provides a bunch of functions which we are composing together to extract the fields of the `JSON`, and assert that the values we're getting are of the correct type.
