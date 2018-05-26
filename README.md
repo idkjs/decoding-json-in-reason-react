@@ -438,3 +438,57 @@ let parseRepoJson = (json: Js.Json.t): repo => {
 ```
 
 This defines a function called `parseRepoJson` which takes one argument called `json` and returns a value of the type `RepoData.repo`. The `Json.Decode` module provides a bunch of functions which we are composing together to extract the fields of the `JSON`, and assert that the values we're getting are of the correct type.
+
+# Don't repeat yourself
+
+This is looking a bit wordy. Do we really have to write `Json.Decode` over and over again?
+
+Nope, Reason has some handy syntax to help us when we need to refer to the exports of a particular module over and over again. One option is to 'open' the module, which means that all of its exports become available in the current scope, so we can ditch the `Json.Decode` qualifier:
+
+```
+open Json.Decode;
+
+let parseRepoJson = (json: repo) =>
+  {
+    full_name: field("full_name", string, json),
+    stargazers_count: field("stargazers_count", int, json),
+    html_url: field("html_url", string, json)
+  };
+```
+
+However, this does introduce the risk of name collisions if you're opening multiple modules. Another option is to use the module name, followed by a period . before an expression. Inside the expression we can use any export of the module without qualifying it with the module name:
+
+```
+let parseRepoJson = (json: Js.Json.t):repo =>
+  Json.Decode.{
+    full_name: field("full_name", string, json),
+    stargazers_count: field("stargazers_count", int, json),
+    html_url: field("html_url", string, json),
+  };
+```
+
+Notice `(json: Js.Json.t):repo`. Here we are typing the expected `json` value as `Js.Json.t` and then saying that the `repo` `json` passed in has to be typed `(json: Js.Json.t)`. See [@nikgraf](https://twitter.com/@nikgraf)'s [egghead series Reason Type Parameters Video](https://egghead.io/lessons/reason-type-parameters-in-reason)to learn more. In fact, if you are interested in Reason and haven't watched it, go watch it now then come back. And then watch it once a week until you've got it. You will learn something every time.
+
+Now let's test it out by adding some code which defines a string of JSON and uses our parseRepoJson function to parse it.
+
+In app.re:
+
+```
+let dummyRepos: array(RepoData.repo) = [|
+  RepoData.parseRepoJson(
+    Js.Json.parseExn(
+      {js|
+        {
+          "stargazers_count": 93,
+          "full_name": "reasonml/reason-tools",
+          "html_url": "https://github.com/reasonml/reason-tools"
+        }
+      |js}
+    )
+  )
+|];
+```
+
+Don't worry about understanding what `Js.Json.parseExn` does or the weird `{js| ... |js}` thing (it's an alternative [string literal syntax](https://bucklescript.github.io/bucklescript/Manual.html#_bucklescript_annotations_for_unicode_and_js_ffi_support)). Returning to the browser you should see the page successfully render from this JSON input.
+
+![screenshot](./screenshot3.png)
