@@ -317,3 +317,63 @@ let repoItem = (repoData: option(RepoData.repo)) =>
 The extra step of using the action and reducer can seem overcomplicated when compared to calling setState in JS React, but as stateful components grow and have more possible states (with an increasing number of possible transitions between them) it's easy for the component to become a hard-to-follow and untestable tangle. This is where the action-reducer model really shines.
 
 You can see this version of the code in the accompanying repo by clicking branch => tags render-button-detour.
+
+Okay, now we know how to do state changes, let's make this into a more realistic app.
+
+# Working with Arrays vs Single Repo
+
+Before we get into loading our data from JSON, there's one more change to make to the component. We actually want to show a list of repos, not just a single one, so we need to change the type of our state:
+
+```
+type state = {repoData: option(array(RepoData.repo))};
+```
+
+And a corresponding change to our dummy data:
+
+```
+let dummyRepos: array(RepoData.repo) = [|
+  {
+    stargazers_count: 27,
+    full_name: "jsdf/reason-react-hacker-news",
+    html_url: "https://github.com/jsdf/reason-react-hacker-news"
+  },
+  {
+    stargazers_count: 93,
+    full_name: "reasonml/reason-tools",
+    html_url: "https://github.com/reasonml/reason-tools"
+  }
+|];
+```
+
+Err, what's with the `[| ... |]` syntax? That's Reason's array literal syntax. If you didn't have the | pipe characters there (so it would look like the normal JS array syntax) then you would be defining a List instead of an array. In Reason lists are immutable, whereas arrays are mutable (like Javascript arrays), however lists are easier to work with if you are dealing with a variable number of elements. Anyway here we're using an array.
+
+We'll need to go through the code and change all the places which refer to `repoData` as being `RepoData.repo` to instead specify `array(RepoData.repo)`.
+
+Finally, we'll change our `render` method to render an array of `RepoItems` instead of just one, by mapping over the array of repos and creating a `<RepoItem />` for each. We have to use `ReasonReact.array` to turn the array of elements into an element itself so it can be used in the JSX below.
+
+```
+let repoItems = (repoData: option(array(RepoData.repo))) =>
+  switch (repoData) {
+  | Some(repos) =>
+    ReasonReact.array(
+      Array.map(
+        (repo: RepoData.repo) => <RepoItem key=repo.full_name repo />,
+        repos,
+      ),
+    )
+  | None => ReasonReact.string("Loading")
+  };
+
+let make = _children => {
+  ...component,
+  initialState: () => {repoData: Some(dummyRepos)},
+  reducer: ((), _) => ReasonReact.NoUpdate,
+  render: ({state: {repoData}}) =>
+    <div className="App">
+      <h1> (ReasonReact.string("Decoding JSON in Reason")) </h1>
+      (repoItems(repoData))
+    </div>,
+};
+```
+
+Now, to load some real data.
