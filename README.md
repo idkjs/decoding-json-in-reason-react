@@ -159,35 +159,99 @@ Now is a good time to save and take a look at our progress in the browser.
 
 ![screenshot](./screenshot1.png)
 
-# A stateful React component
+# A Stateful React Component aka `reducerComponent` and `Variants`
 
 Our app is going to load some data and then render it, which means we need a place to put the data after it's loaded. React component state seems like an obvious choice. So we'll make our App component stateful. We do that by changing our `ReasonReact.statelessComponent` to a [`ReasonReact.reducerComponent`](https://reasonml.github.io/reason-react/docs/en/state-actions-reducer.html#docsNav).
 
 In `App.re`:
 
 ```
-//App.re
-// defining a type for state
-type state = {repoData: RepoData.repo};
+type state = {repoData: option(RepoData.repo)};
 
 let component = ReasonReact.reducerComponent("App");
 
+/* our dummy data */
 let dummyRepo: RepoData.repo = {
   stargazers_count: 27,
   full_name: "jsdf/reason-react-hacker-news",
-  html_url: "https://github.com/jsdf/reason-react-hacker-news"
+  html_url: "https://github.com/jsdf/reason-react-hacker-news",
 };
 
-let make = (_children) => {
+let repoItem = (repoData: option(RepoData.repo)) =>
+  switch (repoData) {
+  | Some(repo) => <RepoItem repo />
+  | None => ReasonReact.string("Loading")
+  };
+
+let make = _children => {
   ...component,
-  initialState: () => {
-    repoData: dummyRepo
-  },
-  render: (self) => {
+  initialState: () => {repoData: Some(dummyRepo)},
+  reducer: ((), _) => ReasonReact.NoUpdate,
+  render: ({state: {repoData}}) =>
     <div className="App">
-      <h1>{ReasonReact.string("Reason Projects")}</h1>
-      <RepoItem repo=self.state.repoData />
-    </div>
-  }
+      <h1> (ReasonReact.string("Decoding JSON in Reason")) </h1>
+      (repoItem(repoData))
+    </div>,
 };
 ```
+
+We've changed some key things: we've defined a `type` for the `state` of our `component` which uses Reason's built in `option` `Variant` type. Here simply called `state`, `ReasonReact.statelessComponent` has become `ReasonReact.reducerComponent`, we've added an `initialState` function to the `component`, and we've changed `render` to take `self` as it's argument (removing the leading `_` underscore so that self is no longer ignored), which is now being used to pass `{state:{repoData}` as a prop to `RepoItem`. What?!! The syntax below is called `destructing`. The `self` method we are now accessing has a `state` property on it and by using `{state:...}` we are saying take the the `state` from `self` and use it in the following function.
+
+`render: ({state: {repoData}}) =>`
+
+## [Variant! Options](https://reasonml.github.io/docs/en/variant.html#docsNav)
+
+We defined our `state` type as:
+
+```
+type state = {repoData: option(RepoData.repo)};
+```
+
+In Reason `option` is a `type` which is made up of 'Variants'. That basically means that a value of this `type` can be one of several possible variations which have been explicitly defined. In the case of `option`, the variants are `Some` and `None`. `Some` is used when a value is present (and contains the value itself), whereas None represents the absence of a value (like null in Javascript). Here we've 'wrapped' dummyRepo in the `Some` variant, because we have a value present.
+
+The `option` tells us (and the compiler) that the `state` can be either of `Some` value or `None` for no value. So there will be `Some(RepoData.repo)` or `None` when we use this `type`.
+
+So why use this wrapper, instead of just allowing our repoData field to contain either a value or null? The reason is to force us to handle both possible cases when actually using the value. This is good because it means we can't accidentally forget to deal with the 'null' case.
+Note that the `state` type must be defined before the call to `ReasonReact.reducerComponent` or you'll get an error saying something like "The type constructor state would escape its scope". We will use this to tell our component what to do in each case by creating a variable called `repoItem` and defining what we want to happen for the variant cases defined in `type state`.
+
+# Option and Pattern Matching
+
+Currently we have our `repoData` dummy data already available when we define the initial state of the component, but once we are loading it from the server it will initially be `null`. However, in Reason you can't just have the value of a record field be `null`, as you can in Javascript. Instead, things which might not be present need to be 'wrapped' in another type called `option`. We can change our state type to represent this like so:
+
+`type state = {repoData: option(RepoData.repo)};`
+
+and in our initialState function we wrap our repo record in `Some()`:
+
+```
+  initialState: () => {
+    repoData: Some(dummyRepo),
+  },
+```
+
+In the code above, we are using `Some` and `None` Variants to define a `repoItem` where if there is `Some` data, we pass that data to our `<RepoItem />` module and return it for rendering to the ui in our component. If there is no data, the we tell the function to use the `None` option, returning a `div` which renders "Loading" to the ui.
+
+Then in our rendering `div` we are passing the current `repoData` which we then pass to the `renderItem` function to deal with what to do in each case, `Some` or `None`.
+
+**We can't pass `state.repoData` directly as the repo prop of RepoItem, because it's wrapped in an option()**, but `RepoItem` expects it **without** the `option` wrapper. So how do we unwrap it? We use **pattern matching**. This is where Reason forces use to cover all possible cases (or at least explicitly throw an error). Pattern matching makes use of the `switch` statement. Unlike a switch statement in Javascript however, the cases of a switch statement in Reason can match the types of the values (eg. `Some` and `None`), not just the values themselves. We'll change our render method to use a `switch` to provide logic to render our repo item in each possible case. We can do that by creating a function, `renderItem` that handles each case and renders based on the result.
+
+```
+let repoItem = (repoData: option(RepoData.repo)) =>
+  switch (repoData) {
+  | Some(repo) => <RepoItem repo />
+  | None => ReasonReact.string("Loading")
+  };
+```
+
+Then in our `div` we call `repoItem` and pass it `state.repoData` which we destructured as `repoData`.
+
+```
+  render: ({state: {repoData}}) =>
+    <div className="App">
+      <h1> (ReasonReact.string("Decoding JSON in Reason")) </h1>
+      (repoItem(repoData))
+    </div>,
+```
+
+If you run `yarn start` you should see the same output as before in the browswer:
+
+![screenshot](./screenshot2.png)
