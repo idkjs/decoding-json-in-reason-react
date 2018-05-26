@@ -114,7 +114,7 @@ let make = (~someProp, ~anotherProp, _children) =>
   };
 ```
 
-The rest of the record is where you can add the `render` function and the lifecycle methods you're used to from React.
+The rest of the record is where you can add the `render` function and the [lifecycle methods](https://reasonml.github.io/reason-react/docs/en/lifecycles.html#content) you're used to from React.
 
 So back to RepoItem.re:
 
@@ -151,4 +151,43 @@ let make = (~repo: RepoData.repo, _children) =>
         {ReasonReact.string(string_of_int(repo.stargazers_count) ++ " stars")}
       </div>
   };
+```
+
+Note that we have to convert the `int` value of `repo.stargazers_count` to a `string` using the [`string_of_int`](https://reasonml.github.io/docs/en/faq.html#where-do-all-these-print-endline-string-of-int-functions-come-from) function. We then use the `++` string concatenation operator to combine it with the string " stars".
+
+Now is a good time to save and take a look at our progress in the browser.
+
+![screenshot](./screenshot1.png)
+
+# A stateful React component
+
+Our app is going to load some data and then render it, which means we need a place to put the data after it's loaded. React component state seems like an obvious choice. So we'll make our App component stateful. We do that by changing our `ReasonReact.statelessComponent` to a [`ReasonReact.reducerComponent`](https://reasonml.github.io/reason-react/docs/en/state-actions-reducer.html#docsNav).
+
+In `App.re`:
+
+```
+//App.re
+// defining a type for state
+type state = {repoData: RepoData.repo};
+
+let component = ReasonReact.reducerComponent("App");
+
+let dummyRepo: RepoData.repo = {
+  stargazers_count: 27,
+  full_name: "jsdf/reason-react-hacker-news",
+  html_url: "https://github.com/jsdf/reason-react-hacker-news"
+};
+
+let make = (_children) => {
+  ...component,
+  initialState: () => {
+    repoData: dummyRepo
+  },
+  render: (self) => {
+    <div className="App">
+      <h1>{ReasonReact.string("Reason Projects")}</h1>
+      <RepoItem repo=self.state.repoData />
+    </div>
+  }
+};
 ```
