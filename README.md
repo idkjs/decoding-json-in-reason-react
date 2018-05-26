@@ -242,7 +242,9 @@ let repoItem = (repoData: option(RepoData.repo)) =>
   };
 ```
 
-Then in our `div` we call `repoItem` and pass it `state.repoData` which we destructured as `repoData`.
+Here you can see the `switch` statement has a case to match a `state.repoData` value with the type Some, and pulls out the actual repo record into a variable called `repo`, which it then uses in the expression to the right of the `=>`, returning a `<RepoItem>` element. This expression will only be used in the case where `state.repoData` is `Some`. Alternatively, if `state.repoData` is `None`, the text "Loading" will be displayed instead.
+
+We will call `repoItem` in our `div` and pass it `state.repoData` which we destructured as `repoData`.
 
 ```
   render: ({state: {repoData}}) =>
