@@ -257,3 +257,63 @@ We will call `repoItem` in our `div` and pass it `state.repoData` which we destr
 If you run `yarn start` you should see the same output as before in the browswer:
 
 ![screenshot](./screenshot2.png)
+
+# Reducer Components
+
+So, why is the stateful component type in Reason React called `reducerComponent`? ReasonReact has a slightly different way of handling state changes in components as compared to ReactJS. If you've used [Redux](https://redux.js.org/), it will look quite familiar. If you haven't, don't worry, no background knowledge is required here.
+
+Basically instead of doing a bunch of stuff inside event handlers like `onClick` and then calling `this.setState`, we just figure out what kind of change we want to make to the component state, and call `self.send` with an 'action', which is just a value representing the kind of state change which should happen, along with any info we need to make the change. This means that most of the state changing code can be isolated in a pure function, making it easier to follow and much easier to write tests for.
+
+We can try out making a state change in this way by making our state for `repo` initially `None` and then changing it once the user clicks on a button. This is a contrived example, but it's useful to illustrate state changes. Pretend we're loading data from the API when this button is clicked :).
+
+First we need to add a type called `action` which enumerates the various kinds of possible state changes which could happen in our component. Right now there's just one: `Loaded`, for when the repo data is loaded:
+
+```
+type action =
+ | Loaded(RepoData.repo);
+```
+
+After that we add a reducer method which takes one such action and the current state, then calculates and returns the updated state:
+
+```
+let reducer = (action, _state) =>
+    switch (action) {
+      | Loaded(loadedRepo) =>
+        ReasonReact.Update({
+          repoData: Some(loadedRepo)
+        })
+  };
+```
+
+You can see that our implementation is pattern matching on the `action` type and returning a `ReasonReact.Update` which contains the new state. Right now we just have a case for the `Loaded` action, but in future we could conceivably have a other kinds of state changes implemented here, in response to different variants of `action`.
+
+Next we change `initialState`, to start with no repo data:
+
+```
+initialState: () => {
+  repoData: None
+},
+```
+
+Finally, we add a `button` element in the `render` function.
+We use `self`'s `send` method which add to our destructure object to create a handler for the button's onClick prop. `send` takes the click event the call the `action` we want to use and whatever values it expects. Here thats, `send(Loaded(dummyRepo))` which translates the click into an action for our reducer. A handler such as this might also use information from the click event object, but in this case we don't need it so we put the `_` before it to ignore it. We can create such a button like this:
+
+```
+  <button onClick=(_event => send(Loaded(dummyRepo)))>
+      (ReasonReact.string("Load Repos"))
+    </button>
+```
+
+We can display a message to click the button in place of the rendered `RepoItem` in the initial blank state (when `state.repoData` is `None`):
+
+```
+let repoItem = (repoData: option(RepoData.repo)) =>
+  switch (repoData) {
+  | Some(repo) => <RepoItem repo />
+  | None => ReasonReact.string("Click Button To Load")
+  };
+```
+
+The extra step of using the action and reducer can seem overcomplicated when compared to calling setState in JS React, but as stateful components grow and have more possible states (with an increasing number of possible transitions between them) it's easy for the component to become a hard-to-follow and untestable tangle. This is where the action-reducer model really shines.
+
+You can see this version of the code in the accompanying repo by clicking branch => tags render-button-detour.
