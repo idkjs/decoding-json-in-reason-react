@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@glennsl/bs-json": "^2.0.0",
+    "bs-fetch": "^0.3.0",
     "react": "^16.4.0",
     "react-dom": "^16.4.0",
     "reason-scripts": "1.0.0-beta1"

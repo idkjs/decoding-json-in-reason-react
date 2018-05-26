@@ -377,3 +377,41 @@ let make = _children => {
 ```
 
 Now, to load some real data.
+
+# BuckleScript
+
+Before fetching our JSON and turning it into a record, first we need to install some extra dependencies. Run:
+
+```
+npm install --save bs-fetch @glennsl/bs-json
+```
+
+or
+
+```
+yarn add bs-fetch @glennsl/bs-json
+```
+
+Here's what these packages do:
+
+    bs-fetch: wraps the browser Fetch API so we can use it from Reason
+    @glennsl/bs-json: allows use to turn JSON fetched from the server into Reason records
+
+These packages work with the Reason-to-JS compiler we've been using this whole time, which is called [BuckleScript](https://bucklescript.github.io/).
+
+Before we can use these newly installed BuckleScript packages we need to let BuckleScript know about them. To do that we need to make some changes to the .bsconfig file in the root of our project. In the bs-dependencies section, add "bs-fetch" and "bs-json":
+
+{
+"name": "reason-scripts",
+"sources": [
+"src"
+],
+"bs-dependencies": [
+"reason-react",
+"bs-jest",
+"bs-fetch", // add this
+"@glennsl/bs-json" // and this too
+],
+// ...more stuff
+
+You'll need to kill and restart your yarn start/npm start command so that the build system can pick up the changes to .bsconfig.
