@@ -6,7 +6,7 @@ We're going to build a small single page web app to put Reason React through its
 
 # A New Project
 
-We're going to use `create-react-app` using `reason-scripts` which will create a starting point for our app, which is going to be called `decoding-reason`:
+We're going to use `create-react-app` using `reason-scripts` which will create a starting point for our app, which is going to be called `decoding-json`:
 
 ```
 yarn create react-app decoding-reason -- --scripts-version reason-scripts
@@ -76,7 +76,7 @@ Note that the body of the render function is now wrapped in {} braces, because i
 
 automatically becomes the return value. If you don't want to return anything from a function, you can make the last statement `()` (which is called 'unit' in [Reason](https://reasonml.github.io/docs/en/function.html#optional-labeled-arguments)).
 
-# Defining components in Reason React
+# Defining Components in Reason React
 
 You might now see an error saying The module or file `RepoItem`can't be found. That's because we added `<RepoItem repo=dummyRepo />` in the render function of the `App component`, but we haven't created that module yet. Add a new file called `RepoItem.re` containing:
 
@@ -156,6 +156,7 @@ let make = (~repo: RepoData.repo, _children) =>
 Note that we have to convert the `int` value of `repo.stargazers_count` to a `string` using the [`string_of_int`](https://reasonml.github.io/docs/en/faq.html#where-do-all-these-print-endline-string-of-int-functions-come-from) function. We then use the `++` string concatenation operator to combine it with the string " stars".
 
 Now is a good time to save and take a look at our progress in the browser.
+
 ![screenshot1](./screenshots/screenshot1.png)
 
 # A Stateful React Component aka `reducerComponent` and `Variants`
@@ -254,6 +255,7 @@ We will call `repoItem` in our `div` and pass it `state.repoData` which we destr
 ```
 
 If you run `yarn start` you should see the same output as before in the browswer:
+
 ![screenshot2](./screenshots/screenshot2.png)
 
 # Reducer Components
@@ -399,6 +401,7 @@ These packages work with the Reason-to-JS compiler we've been using this whole t
 
 Before we can use these newly installed BuckleScript packages we need to let BuckleScript know about them. To do that we need to make some changes to the .bsconfig file in the root of our project. In the bs-dependencies section, add "bs-fetch" and "bs-json":
 
+```
 {
 "name": "reason-scripts",
 "sources": [
@@ -411,6 +414,7 @@ Before we can use these newly installed BuckleScript packages we need to let Buc
 "@glennsl/bs-json" // and this too
 ],
 // ...more stuff
+```
 
 You'll need to kill and restart your yarn start/npm start command so that the build system can pick up the changes to .bsconfig.
 
@@ -488,6 +492,7 @@ let dummyRepos: array(RepoData.repo) = [|
 ```
 
 Don't worry about understanding what `Js.Json.parseExn` does or the weird `{js| ... |js}` thing (it's an alternative [string literal syntax](https://bucklescript.github.io/bucklescript/Manual.html#_bucklescript_annotations_for_unicode_and_js_ffi_support)). Returning to the browser you should see the page successfully render from this JSON input.
+
 ![screenshot3](./screenshots/screenshot3.png)
 
 # Fetching data
@@ -614,6 +619,7 @@ First we implement the didMount lifecycle method. We use `self.send` to create a
 We end the promise chain by returning `Js.Promise.resolve()`. The whole expression defining the promise chain is then `|>` piped to a special function called ignore, which just tells Reason that we don't intend to do anything with the value that the promise chain expression evaluates to (we only care about the side effect it has of calling the updater function).
 
 This is what it should look like in the browser:
+
 ![screenshot4](./screenshots/screenshot4.png)
 
 # Add some CSS
