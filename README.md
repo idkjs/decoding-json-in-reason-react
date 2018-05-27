@@ -4,7 +4,7 @@ Reason is a new statically-typed functional programming language from Facebook w
 
 We're going to build a small single page web app to put Reason React through its paces. The app will display a list of top Reason-related Github repos. It's a small enough task that we can complete it in a few hours, but also has enough complexity that we can kick the tires of this new language. This tutorial expects no existing knowledge of Reason, though a basic familiarity with static types would be helpful.
 
-# A New roject
+# A New Project
 
 We're going to use `create-react-app` using `reason-scripts` which will create a starting point for our app, which is going to be called `decoding-reason`:
 
