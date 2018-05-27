@@ -54,7 +54,7 @@ let make = _children => {
   reducer,
   render: ({state: {repoData}}) =>
     <div className="App">
-      <h1> (ReasonReact.string("Decoding JSON in Reason")) </h1>
+      <h1> (ReasonReact.string("Decoding JSON in ReasonReact")) </h1>
       (repoItems(repoData))
     </div>,
 };

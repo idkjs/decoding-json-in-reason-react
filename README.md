@@ -188,7 +188,7 @@ let make = _children => {
   reducer: ((), _) => ReasonReact.NoUpdate,
   render: ({state: {repoData}}) =>
     <div className="App">
-      <h1> (ReasonReact.string("Decoding JSON in Reason")) </h1>
+      <h1> (ReasonReact.string("Decoding JSON in ReasonReact")) </h1>
       (repoItem(repoData))
     </div>,
 };
@@ -248,7 +248,7 @@ We will call `repoItem` in our `div` and pass it `state.repoData` which we destr
 ```
   render: ({state: {repoData}}) =>
     <div className="App">
-      <h1> (ReasonReact.string("Decoding JSON in Reason")) </h1>
+      <h1> (ReasonReact.string("Decoding JSON in ReasonReact")) </h1>
       (repoItem(repoData))
     </div>,
 ```
@@ -368,7 +368,7 @@ let make = _children => {
   reducer: ((), _) => ReasonReact.NoUpdate,
   render: ({state: {repoData}}) =>
     <div className="App">
-      <h1> (ReasonReact.string("Decoding JSON in Reason")) </h1>
+      <h1> (ReasonReact.string("Decoding JSON in ReasonReact")) </h1>
       (repoItems(repoData))
     </div>,
 };
@@ -603,7 +603,7 @@ let make = _children => {
   reducer,
   render: ({state: {repoData}}) =>
     <div className="App">
-      <h1> (ReasonReact.string("Decoding JSON in Reason")) </h1>
+      <h1> (ReasonReact.string("Decoding JSON in ReasonReact")) </h1>
       (repoItems(repoData))
     </div>,
 };
@@ -615,3 +615,37 @@ We end the promise chain by returning `Js.Promise.resolve()`. The whole expressi
 
 This is what it should look like in the browser:
 ![screenshot4](./screenshots/screenshot4.png)
+
+# Add some CSS
+
+Let's go back to `index.re`. Add this code to the top of the file:
+
+```
+[%%bs.raw {|
+require('./index.css');
+|}];
+```
+
+This `%%bs.raw` thing allows us to include some plain Javascript code between the `{| and |}`. In this case we're just using it to include a CSS file in the usual Webpack way. After saving, you should see some styling changes applied to the app. You can open up the `index.css` file which create-react-app made for us, and customise the styling to your heart's content.
+
+Lets add some `margin` so that the ui isn't pushed up against the left side. Open `index.css` and change it to this:
+
+```
+body {
+  margin: 2em;
+  padding: 0;
+  font-family: sans-serif;
+}
+```
+
+You can also use inline styles in your React component by passing a style prop created with [`ReactDOMRe.Style.make`](https://reasonml.github.io/reason-react/docs/en/style.html#docsNav):
+
+```
+style={ReactDOMRe.Style.make(~color="red", ~fontSize="68px")()}
+```
+
+And that's it!
+
+You can see the completed app running [here]. The completed source is available on [Github](https://github.com/idkjs/decoding-json-in-reason-react).
+
+If you have any feedback about this article you can tweet me: [@\_idkjs](https://www.twitter.com/@_idkjs). Thanks to [@ur_friend_james](https://www.twitter.com/@ur_friend_james) for his orginal post which can be found [here](https://jamesfriend.com.au/a-first-reason-react-app-for-js-developers).
