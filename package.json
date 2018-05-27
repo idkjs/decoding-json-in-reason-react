@@ -14,6 +14,7 @@
     "build": "react-scripts build",
     "watch": "bsb -make-world -w",
     "test": "react-scripts test --env=jsdom",
+    "deploy": "git subtree push --prefix build origin gh-pages",
     "eject": "react-scripts eject"
   },
   "devDependencies": {

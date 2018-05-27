@@ -646,6 +646,33 @@ style={ReactDOMRe.Style.make(~color="red", ~fontSize="68px")()}
 
 And that's it!
 
-You can see the completed app running [here]. The completed source is available on [Github](https://github.com/idkjs/decoding-json-in-reason-react).
+You can see the completed app running [here](https://decoding-json-in-reason-react.netlify.com/). The completed source is available on [Github](https://github.com/idkjs/decoding-json-in-reason-react).
 
 If you have any feedback about this article you can tweet me: [@\_idkjs](https://www.twitter.com/@_idkjs). Thanks to [@ur_friend_james](https://www.twitter.com/@ur_friend_james) for his orginal post which can be found [here](https://jamesfriend.com.au/a-first-reason-react-app-for-js-developers).
+
+# Bonus: Deploying Demo with [Netlify](netlify.com) and git subtree.
+
+Then run `yarn build` to get a production built version of your project.
+
+Remove the `build` directory from the project’s .gitignore file (it’s ignored by default by create-react-app).
+
+Add the following command to `package.json`s `scripts` key:
+
+```
+...
+    "deploy": "git subtree push --prefix build origin gh-pages",
+...
+```
+
+Make sure git knows about your subtree (the subfolder with your site). Run:
+
+```
+git add build && git commit -m "Initial dist subtree commit"
+```
+
+Run `yarn deploy`.
+
+Sign up for Netlify if you haven't. After loggin in,
+Click the big aqua-blue "New site from Git" button.
+![netlify](./screenshots/netlify.png)
+Select your repo, change the directory to you `gh-pages` directory and click "Deploy Site" button.
