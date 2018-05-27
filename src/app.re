@@ -3,7 +3,7 @@ type state = {repoData: option(array(RepoData.repo))};
 
 /* define action type */
 type action =
-  | Loaded(RepoData.repo);
+  | Loaded(array(RepoData.repo));
 
 let component = ReasonReact.reducerComponent("App");
 
@@ -33,10 +33,25 @@ let repoItems = (repoData: option(array(RepoData.repo))) =>
   | None => ReasonReact.string("Loading")
   };
 
+let reducer = (action, _state) =>
+  switch (action) {
+  | Loaded(loadedRepo) => ReasonReact.Update({repoData: Some(loadedRepo)})
+  };
+
 let make = _children => {
   ...component,
-  initialState: () => {repoData: Some(dummyRepos)},
-  reducer: ((), _) => ReasonReact.NoUpdate,
+  initialState: () => {repoData: None},
+  didMount: self => {
+    let handleReposLoaded = repoData => self.send(Loaded(repoData));
+
+    RepoData.fetchRepos()
+    |> Js.Promise.then_(repoData => {
+         handleReposLoaded(repoData);
+         Js.Promise.resolve();
+       })
+    |> ignore;
+  },
+  reducer,
   render: ({state: {repoData}}) =>
     <div className="App">
       <h1> (ReasonReact.string("Decoding JSON in Reason")) </h1>

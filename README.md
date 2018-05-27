@@ -156,8 +156,7 @@ let make = (~repo: RepoData.repo, _children) =>
 Note that we have to convert the `int` value of `repo.stargazers_count` to a `string` using the [`string_of_int`](https://reasonml.github.io/docs/en/faq.html#where-do-all-these-print-endline-string-of-int-functions-come-from) function. We then use the `++` string concatenation operator to combine it with the string " stars".
 
 Now is a good time to save and take a look at our progress in the browser.
-
-![screenshot](./screenshot1.png)
+![screenshot1](./screenshots/screenshot1.png)
 
 # A Stateful React Component aka `reducerComponent` and `Variants`
 
@@ -255,8 +254,7 @@ We will call `repoItem` in our `div` and pass it `state.repoData` which we destr
 ```
 
 If you run `yarn start` you should see the same output as before in the browswer:
-
-![screenshot](./screenshot2.png)
+![screenshot2](./screenshots/screenshot2.png)
 
 # Reducer Components
 
@@ -490,5 +488,130 @@ let dummyRepos: array(RepoData.repo) = [|
 ```
 
 Don't worry about understanding what `Js.Json.parseExn` does or the weird `{js| ... |js}` thing (it's an alternative [string literal syntax](https://bucklescript.github.io/bucklescript/Manual.html#_bucklescript_annotations_for_unicode_and_js_ffi_support)). Returning to the browser you should see the page successfully render from this JSON input.
+![screenshot3](./screenshots/screenshot3.png)
 
-![screenshot](./screenshot3.png)
+# Fetching data
+
+Looking at the form of the [Github API response](https://api.github.com/search/repositories?q=topic%3Areasonml&type=Repositories), we're interested in the `items` field. This field contains an array of repos. We'll add another function which uses our parseRepoJson function to parse the `items` field into an array of records.
+
+In RepoData.re:
+
+```
+let parseReposResponseJson = json =>
+  Json.Decode.field("items", Json.Decode.array(parseRepoJson), json);
+```
+
+Finally we'll make use of the `bs-fetch` package to make our HTTP request to the API.
+
+But first, more new syntax! I promise this is the last bit. The pipe operator `|>` simply takes the result of the expression on the left of the `|>` operator and calls the function on the right of the `|>` operator with that value.
+
+For example, instead of:
+
+```
+doThing3(doThing2(doThing1(arg)))
+```
+
+with the pipe operator we can do:
+
+```
+arg |> doThing1 |> doThing2 |> doThing3
+```
+
+This lets us simulate something like the chaining API of Promises in Javascript, except that Js.Promise.then\_ is a function we call with the promise as the argument, instead of being a method on the promise object.
+
+In RepoData.re:
+
+```
+let reposUrl = "https://api.github.com/search/repositories?q=topic%3Areasonml&type=Repositories";
+
+let fetchRepos = () =>
+  Fetch.fetch(reposUrl)
+    |> Js.Promise.then_(Fetch.Response.text)
+    |> Js.Promise.then_(
+      jsonText =>
+        Js.Promise.resolve(parseReposResponseJson(Js.Json.parseExn(jsonText)))
+    );
+```
+
+We can make the Promise chaining fetchRepos a bit more terse by temporarily opening up Js.Promise:
+
+```
+let fetchRepos = () =>
+  Js.Promise.(
+    Fetch.fetch(reposUrl)
+      |> then_(Fetch.Response.text)
+      |> then_(
+        jsonText =>
+          resolve(parseReposResponseJson(Js.Json.parseExn(jsonText)))
+      )
+  );
+```
+
+Finally, back in `App.re` we'll add some code to load the data and store it in component state:
+
+```
+type state = {repoData: option(array(RepoData.repo))};
+
+type action =
+ | Loaded(array(RepoData.repo));
+
+let component = ReasonReact.reducerComponent("App");
+
+let dummyRepos: array(RepoData.repo) = [|
+  RepoData.parseRepoJson(
+    Js.Json.parseExn(
+      {js|
+        {
+          "stargazers_count": 93,
+          "full_name": "reasonml/reason-tools",
+          "html_url": "https://github.com/reasonml/reason-tools"
+        }
+      |js},
+    ),
+  ),
+|];
+let repoItems = (repoData: option(array(RepoData.repo))) =>
+  switch (repoData) {
+  | Some(repos) =>
+    ReasonReact.array(
+      Array.map(
+        (repo: RepoData.repo) => <RepoItem key=repo.full_name repo />,
+        repos,
+      ),
+    )
+  | None => ReasonReact.string("Loading")
+  };
+
+let reducer = (action, _state) =>
+  switch (action) {
+  | Loaded(loadedRepo) => ReasonReact.Update({repoData: Some(loadedRepo)})
+  };
+
+let make = _children => {
+  ...component,
+  initialState: () => {repoData: None},
+  didMount: self => {
+    let handleReposLoaded = repoData => self.send(Loaded(repoData));
+
+    RepoData.fetchRepos()
+    |> Js.Promise.then_(repoData => {
+         handleReposLoaded(repoData);
+         Js.Promise.resolve();
+       })
+    |> ignore;
+  },
+  reducer,
+  render: ({state: {repoData}}) =>
+    <div className="App">
+      <h1> (ReasonReact.string("Decoding JSON in Reason")) </h1>
+      (repoItems(repoData))
+    </div>,
+};
+```
+
+First we implement the didMount lifecycle method. We use `self.send` to create a function called `handleReposLoaded` to handle our loaded data and update the component state. We will call this in our `RepoData.fetchRepos()` function and pass it the expected `repoData` value. `handleReposLoaded` then passes that value to `self.send` where we pass it to a defined `action` type. **`self.send` works with `action` types so to use it, make sure you have defined the `action` you want to use it with**. So, using our `RepoData.fetchRepos()` function, we load the data. Much like promise chaining in Javascript, we pipe this into `Js.Promise.then_`, where we call the `handleReposLoaded` function with the loaded data, updating the component state.
+
+We end the promise chain by returning `Js.Promise.resolve()`. The whole expression defining the promise chain is then `|>` piped to a special function called ignore, which just tells Reason that we don't intend to do anything with the value that the promise chain expression evaluates to (we only care about the side effect it has of calling the updater function).
+
+This is what it should look like in the browser:
+![screenshot4](./screenshots/screenshot4.png)
