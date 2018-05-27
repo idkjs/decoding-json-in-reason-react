@@ -1,4 +1,4 @@
-# Decoding API Response JSON in ReasonReact
+# [Decoding API Response JSON in ReasonReact](https://medium.com/@idkjs/decoding-json-in-reasonreact-cff3a07c1200)
 
 Reason is a new statically-typed functional programming language from Facebook which can be compiled to Javascript. Reason React is a wrapper for React which makes it easy to use from Reason.
 
