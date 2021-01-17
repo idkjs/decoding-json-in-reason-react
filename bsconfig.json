@@ -1,5 +1,5 @@
 {
-  "name": "reason-scripts",
+  "name": "decoding-json",
   "sources": [
     "src"
   ],
@@ -10,7 +10,7 @@
     "bs-fetch"
   ],
   "reason": {
-    "react-jsx": 2
+    "react-jsx": 3
   },
   "bsc-flags": [
     "-bs-super-errors"
